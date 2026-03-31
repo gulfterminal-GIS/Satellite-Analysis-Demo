@@ -89,6 +89,8 @@ function initializeTabs() {
  * Initialize Crop Classification Map with 4 Fields
  */
 async function initializeCropMap() {
+    showLoading(true, 'Loading crop fields...');
+    
     cropMap = L.map('cropMap').setView([31.0, 31.07], 13);
     
     // Use light gray basemap to show raw images better
@@ -164,12 +166,16 @@ async function initializeCropMap() {
         classifyBtn.disabled = false;
         showStatus('success', 'Fields loaded. Select a field TIFF to classify or click "Classify Crops" to analyze Field 4.', 'cropStatus');
     }
+    
+    showLoading(false);
 }
 
 /**
  * Initialize Canal Map
  */
 async function initializeCanalMap() {
+    showLoading(true, 'Loading canal area...');
+    
     canalMap = L.map('canalMap').setView([27.58, 30.854], 13);
     
     // Use light gray basemap
@@ -225,12 +231,16 @@ async function initializeCanalMap() {
     } catch (error) {
         console.error('Error loading Canals.geojson:', error);
     }
+    
+    showLoading(false);
 }
 
 /**
  * Initialize Lake Map
  */
 async function initializeLakeMap() {
+    showLoading(true, 'Loading lake area...');
+    
     lakeMap = L.map('lakeMap').setView([29.24, 30.477], 12);
     
     // Use light gray basemap
@@ -286,6 +296,8 @@ async function initializeLakeMap() {
     } catch (error) {
         console.error('Error loading Lakes.geojson:', error);
     }
+    
+    showLoading(false);
 }
 
 /**
@@ -1026,9 +1038,14 @@ function showStatus(type, message, elementId = 'downloadStatus') {
 /**
  * Show/hide loading overlay
  */
-function showLoading(show) {
+function showLoading(show, message = 'Loading...') {
     const overlay = document.getElementById('loadingOverlay');
+    const loadingText = document.getElementById('loadingText');
+    
     if (show) {
+        if (loadingText) {
+            loadingText.textContent = message;
+        }
         overlay.classList.remove('hidden');
     } else {
         overlay.classList.add('hidden');
@@ -1173,6 +1190,7 @@ async function loadTiffOverlay(map, tiffFile, bounds, overlayArray) {
  */
 async function analyzeLakeWaterQuality(file) {
     try {
+        showLoading(true, 'Analyzing lake water quality...');
         showStatus('info', 'Analyzing water quality using advanced bloom detection...', 'lakeStatus');
         
         // Read TIFF file
@@ -1320,10 +1338,12 @@ async function analyzeLakeWaterQuality(file) {
             totalPixels
         });
         
+        showLoading(false);
         showStatus('success', `Analysis complete! Bloom severity: ${bloomSeverity}`, 'lakeStatus');
         
     } catch (error) {
         console.error('Error analyzing lake:', error);
+        showLoading(false);
         showStatus('error', 'Error analyzing water quality: ' + error.message, 'lakeStatus');
     }
 }
@@ -1710,6 +1730,7 @@ function createNDCIDistributionChart(results) {
  */
 async function analyzeCanalVegetation(file) {
     try {
+        showLoading(true, 'Analyzing canal vegetation...');
         showStatus('info', 'Analyzing canal vegetation and water quality...', 'canalStatus');
         
         // Read TIFF file
@@ -1848,10 +1869,12 @@ async function analyzeCanalVegetation(file) {
             totalPixels
         });
         
+        showLoading(false);
         showStatus('success', `Analysis complete! Vegetation status: ${vegSeverity}`, 'canalStatus');
         
     } catch (error) {
         console.error('Error analyzing canal:', error);
+        showLoading(false);
         showStatus('error', 'Error analyzing canal: ' + error.message, 'canalStatus');
     }
 }
@@ -2187,6 +2210,7 @@ function createCanalNDVIChart(results) {
  */
 async function classifyAllFields() {
     try {
+        showLoading(true, 'Classifying all 4 fields... Please wait.');
         showStatus('info', 'Classifying all 4 fields... This may take a moment.', 'cropStatus');
         
         const fieldFiles = [
@@ -2201,6 +2225,7 @@ async function classifyAllFields() {
         
         for (let i = 0; i < fieldFiles.length; i++) {
             console.log(`📊 Classifying Field ${i + 1}...`);
+            showLoading(true, `Classifying Field ${i + 1} of 4...`);
             
             try {
                 const tiffResponse = await fetch(fieldFiles[i]);
@@ -2216,6 +2241,8 @@ async function classifyAllFields() {
             }
         }
         
+        showLoading(false);
+        
         // Display results for Field 4 (largest field with best data)
         if (fieldClassifications['field4']) {
             displayCropClassificationResults(fieldClassifications['field4'], 4);
@@ -2228,6 +2255,7 @@ async function classifyAllFields() {
         
     } catch (error) {
         console.error('Error classifying all fields:', error);
+        showLoading(false);
         showStatus('error', 'Error during classification: ' + error.message, 'cropStatus');
     }
 }
