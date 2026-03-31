@@ -1,0 +1,24 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Sample Agricultural Area",
+        "description": "Test area for satellite analysis"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [28.3852, 27.0525],
+            [28.4052, 27.0525],
+            [28.4052, 27.0725],
+            [28.3852, 27.0725],
+            [28.3852, 27.0525]
+          ]
+        ]
+      }
+    }
+  ]
+}

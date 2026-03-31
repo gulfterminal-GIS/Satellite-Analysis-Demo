@@ -1,0 +1,151 @@
+========================================
+SATELLITE ANALYSIS WORKFLOW - STEP 1
+========================================
+
+PURPOSE:
+Download RAW Sentinel-2 satellite images with actual band reflectance values
+for manual analysis and custom index calculation.
+
+========================================
+WHAT YOU GET:
+========================================
+
+FILE FORMAT: GeoTIFF (32-bit Float)
+FILE NAME: sentinel_raw_YYYY-MM-DD.tiff
+
+BANDS INCLUDED:
+- B02: Blue (450-520 nm)
+- B03: Green (530-590 nm)  
+- B04: Red (640-670 nm)
+- B08: Near-Infrared / NIR (780-900 nm)
+
+DATA TYPE: FLOAT32 (32-bit floating point)
+VALUE RANGE: 0.0 to 1.0 (reflectance values)
+RESOLUTION: 512 x 512 pixels
+SOURCE: Sentinel-2 Level 2A (atmospherically corrected)
+
+========================================
+WHY RAW DATA?
+========================================
+
+✓ Actual reflectance values (not processed images)
+✓ Can calculate ANY vegetation index manually
+✓ Full control over calculations
+✓ No pre-processing applied
+✓ Suitable for scientific analysis
+✓ Can be used in GIS software (QGIS, ArcGIS)
+
+========================================
+MANUAL INDEX CALCULATIONS:
+========================================
+
+With these 4 bands, you can calculate:
+
+1. NDVI = (B08 - B04) / (B08 + B04)
+   Vegetation health
+
+2. NDWI = (B03 - B08) / (B03 + B08)
+   Water content
+
+3. NDMI = (B08 - B11) / (B08 + B11)
+   Note: B11 not included, need separate download
+
+4. SAVI = ((B08 - B04) / (B08 + B04 + L)) * (1 + L)
+   Where L = 0.428 (soil adjustment factor)
+
+5. EVI = 2.5 * ((B08 - B04) / (B08 + 6*B04 - 7.5*B02 + 1))
+   Enhanced vegetation index
+
+6. GNDVI = (B08 - B03) / (B08 + B03)
+   Green vegetation index
+
+7. Custom indices using your own formulas
+
+========================================
+HOW TO USE THE TIFF FILE:
+========================================
+
+OPTION 1: Python (Recommended)
+```python
+import rasterio
+import numpy as np
+
+# Open TIFF file
+with rasterio.open('sentinel_raw_2026-03-30.tiff') as src:
+    # Read all 4 bands
+    b02 = src.read(1)  # Blue
+    b03 = src.read(2)  # Green
+    b04 = src.read(3)  # Red
+    b08 = src.read(4)  # NIR
+    
+    # Calculate NDVI
+    ndvi = (b08 - b04) / (b08 + b04)
+    
+    # Calculate EVI
+    evi = 2.5 * ((b08 - b04) / (b08 + 6*b04 - 7.5*b02 + 1))
+```
+
+OPTION 2: QGIS
+1. Open QGIS
+2. Layer → Add Layer → Add Raster Layer
+3. Select the TIFF file
+4. Use Raster Calculator for indices
+5. Formula: ("Band 4" - "Band 3") / ("Band 4" + "Band 3")
+
+OPTION 3: JavaScript (Next Steps)
+We will create tools to:
+- Load TIFF in browser
+- Extract band values
+- Calculate indices
+- Visualize results
+
+========================================
+NEXT STEPS:
+========================================
+
+STEP 2: Load and visualize TIFF in browser
+STEP 3: Calculate vegetation indices
+STEP 4: Apply classification algorithms
+STEP 5: Generate analysis reports
+
+========================================
+TECHNICAL NOTES:
+========================================
+
+- Values are reflectance (0.0 = 0%, 1.0 = 100%)
+- No scaling needed for calculations
+- NaN values indicate no data
+- Coordinate system: WGS84 (EPSG:4326)
+- Sentinel-2 L2A = atmospherically corrected
+- 10m spatial resolution (resampled to 512x512)
+
+========================================
+TROUBLESHOOTING:
+========================================
+
+Q: TIFF file is black when opened
+A: Normal! Values are 0.0-1.0, need to scale for display
+   In QGIS: Right-click layer → Properties → Symbology
+   Set Min=0, Max=0.3 for better visualization
+
+Q: Can't open TIFF file
+A: Use software that supports GeoTIFF:
+   - QGIS (free)
+   - Python + rasterio
+   - ArcGIS
+   - GDAL tools
+
+Q: Need more bands (B11, B12, etc.)
+A: Modify evalscript in app.js to include more bands
+   Add: "B11", "B12" to input array
+   Add to output: bands: 6 (or more)
+
+========================================
+CONTACT & SUPPORT:
+========================================
+
+Check browser console (F12) for detailed logs
+All processing happens client-side (your browser)
+No data is sent to external servers except Sentinel Hub
+
+========================================

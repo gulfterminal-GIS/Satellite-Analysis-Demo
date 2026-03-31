@@ -1,0 +1,98 @@
+{
+  "workflow": {
+    "name": "Satellite Analysis Workflow",
+    "version": "1.0.0",
+    "currentStep": 1,
+    "totalSteps": 5
+  },
+  "sentinel": {
+    "clientId": "465e655a-d914-4907-a658-b6ceba99a3d7",
+    "clientSecret": "WCUYVOjHNtSfuzC96QLxsXEDdH984om0",
+    "baseUrl": "https://services.sentinel-hub.com",
+    "dataSource": "sentinel-2-l2a",
+    "minDate": "2015-06-23",
+    "maxDate": "today"
+  },
+  "imageTypes": {
+    "truecolor": {
+      "name": "True Color",
+      "nameAr": "صورة ملونة",
+      "bands": ["B02", "B03", "B04"],
+      "description": "Natural color composite"
+    },
+    "ndvi": {
+      "name": "NDVI",
+      "nameAr": "مؤشر النباتات",
+      "bands": ["B04", "B08"],
+      "description": "Vegetation health index",
+      "range": [-1, 1]
+    },
+    "ndwi": {
+      "name": "NDWI",
+      "nameAr": "مؤشر المياه",
+      "bands": ["B03", "B08"],
+      "description": "Water content index",
+      "range": [-1, 1]
+    },
+    "ndmi": {
+      "name": "NDMI",
+      "nameAr": "مؤشر الرطوبة",
+      "bands": ["B08", "B11"],
+      "description": "Moisture index",
+      "range": [-1, 1]
+    },
+    "savi": {
+      "name": "SAVI",
+      "nameAr": "مؤشر النباتات المعدل",
+      "bands": ["B04", "B08"],
+      "description": "Soil adjusted vegetation index",
+      "range": [-1, 1]
+    },
+    "evi": {
+      "name": "EVI",
+      "nameAr": "مؤشر النباتات المحسن",
+      "bands": ["B02", "B04", "B08"],
+      "description": "Enhanced vegetation index",
+      "range": [-1, 1]
+    },
+    "gndvi": {
+      "name": "GNDVI",
+      "nameAr": "مؤشر النباتات الأخضر",
+      "bands": ["B03", "B08"],
+      "description": "Green vegetation index",
+      "range": [-1, 1]
+    }
+  },
+  "map": {
+    "defaultCenter": [27.0625, 28.3952],
+    "defaultZoom": 13,
+    "minZoom": 5,
+    "maxZoom": 18
+  },
+  "output": {
+    "imageSize": {
+      "width": 1024,
+      "height": 1024
+    },
+    "format": "png",
+    "quality": "high"
+  },
+  "futureSteps": {
+    "step2": {
+      "name": "Image Analysis",
+      "description": "Load and analyze downloaded images"
+    },
+    "step3": {
+      "name": "Classification",
+      "description": "Apply machine learning classification"
+    },
+    "step4": {
+      "name": "Statistics",
+      "description": "Generate reports and statistics"
+    },
+    "step5": {
+      "name": "Export",
+      "description": "Export results in various formats"
+    }
+  }
+}

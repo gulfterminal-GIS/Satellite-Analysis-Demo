@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satellite Analysis Workflow - Step 1</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <!-- Cairo Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1><i class="fas fa-satellite"></i> Satellite Analysis Workflow</h1>
+            <p>Advanced Remote Sensing Analysis for Agriculture & Water Bodies</p>
+        </header>
+
+        <!-- Tabs Navigation -->
+        <div class="tabs-container">
+            <div class="tabs-nav">
+                <button class="tab-btn active" data-tab="raw-download">
+                    <i class="fas fa-download"></i>
+                    <span>Raw Image Download</span>
+                </button>
+                <button class="tab-btn" data-tab="crop-classification">
+                    <i class="fas fa-seedling"></i>
+                    <span>Crop Classification</span>
+                </button>
+                <button class="tab-btn" data-tab="canals-analysis">
+                    <i class="fas fa-water"></i>
+                    <span>Canals Analysis</span>
+                </button>
+                <button class="tab-btn" data-tab="lakes-analysis">
+                    <i class="fas fa-tint"></i>
+                    <span>Lakes Analysis</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            
+            <!-- Tab 1: Raw Image Download -->
+            <div class="tab-content active" id="raw-download">
+                <!-- Left Panel: Controls -->
+                <div class="control-panel">
+                <div class="card">
+                    <h3><i class="fas fa-upload"></i> 1. Upload GeoJSON</h3>
+                    <div class="upload-area" id="uploadArea">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>اسحب ملف GeoJSON هنا أو انقر للتحميل</p>
+                        <input type="file" id="fileInput" accept=".geojson,.json" hidden>
+                    </div>
+                    <div id="fileInfo" class="file-info hidden">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="fileName"></span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fas fa-calendar"></i> 2. Select Date</h3>
+                    <input type="date" id="dateInput" class="date-input">
+                    <p class="hint">اختر تاريخ الصورة المطلوبة</p>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fas fa-image"></i> 3. Image Information</h3>
+                    <p class="hint">سيتم تحميل صورة TIFF خام تحتوي على قيم الانعكاس الفعلية للأشرطة</p>
+                    <div class="info-box">
+                        <p><strong>الأشرطة المطلوبة:</strong></p>
+                        <ul>
+                            <li>B02 - Blue (الأزرق)</li>
+                            <li>B03 - Green (الأخضر)</li>
+                            <li>B04 - Red (الأحمر)</li>
+                            <li>B08 - NIR (الأشعة تحت الحمراء)</li>
+                        </ul>
+                        <p><strong>نوع الملف:</strong> GeoTIFF (32-bit Float)</p>
+                        <p><strong>القيم:</strong> Reflectance (0.0 - 1.0)</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fas fa-download"></i> 4. Download Raw Image</h3>
+                    <button id="downloadBtn" class="btn btn-primary" disabled>
+                        <i class="fas fa-download"></i>
+                        تحميل الصورة الخام (Raw TIFF)
+                    </button>
+                    <div id="downloadStatus" class="status-message hidden"></div>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fas fa-info-circle"></i> Image Info</h3>
+                    <div id="imageInfo" class="image-info">
+                        <p>لم يتم تحميل صورة بعد</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Map -->
+            <div class="map-panel">
+                <div id="map"></div>
+                <div class="map-controls">
+                    <button id="clearBtn" class="btn btn-secondary">
+                        <i class="fas fa-trash"></i>
+                        مسح الخريطة
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- End Tab 1 -->
+
+        <!-- Tab 2: Crop Classification -->
+        <div class="tab-content" id="crop-classification">
+            <div class="control-panel">
+                <div class="card">
+                    <h3><i class="fas fa-map-marked-alt"></i> Field Selection</h3>
+                    <p class="hint">Click on a field to zoom to its location</p>
+                    
+                    <div class="field-selector">
+                        <button class="field-btn" onclick="zoomToField(0)">
+                            <span class="field-color" style="background: #2ecc71;"></span>
+                            Field 1
+                        </button>
+                        <button class="field-btn" onclick="zoomToField(1)">
+                            <span class="field-color" style="background: #3498db;"></span>
+                            Field 2
+                        </button>
+                        <button class="field-btn" onclick="zoomToField(2)">
+                            <span class="field-color" style="background: #e74c3c;"></span>
+                            Field 3
+                        </button>
+                        <button class="field-btn" onclick="zoomToField(3)">
+                            <span class="field-color" style="background: #f39c12;"></span>
+                            Field 4
+                        </button>
+                    </div>
+                    
+                    <div class="info-box" style="margin-top: 15px;">
+                        <p style="font-size: 12px; color: #7f8c8d;">
+                            <i class="fas fa-info-circle"></i> 
+                            Raw TIFF images displayed on the map
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3><i class="fas fa-seedling"></i> Crop Classification</h3>
+                    <p class="hint">Upload your downloaded TIFF file to classify crop types</p>
+                    
+                    <div class="upload-area" id="cropUploadArea">
+                        <i class="fas fa-file-image"></i>
+                        <p>Upload Raw TIFF Image</p>
+                        <input type="file" id="cropFileInput" accept=".tiff,.tif" hidden>
+                    </div>
+                    
+                    <div class="info-box">
+                        <p><strong>Classification Methods:</strong></p>
+                        <ul>
+                            <li>Random Forest (95% accuracy)</li>
+                            <li>Vegetation Indices Analysis</li>
+                            <li>Spectral Signature Matching</li>
+                        </ul>
+                    </div>
+                    
+                    <button id="classifyCropBtn" class="btn btn-primary" disabled>
+                        <i class="fas fa-brain"></i>
+                        Classify Crops
+                    </button>
+                    
+                    <div id="cropStatus" class="status-message hidden"></div>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fas fa-chart-pie"></i> Classification Results</h3>
+                    <div id="cropResults" class="results-box">
+                        <p>No classification results yet</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="map-panel">
+                <div id="cropMap" class="analysis-map"></div>
+                <div class="map-legend" id="cropLegend">
+                    <h4>Crop Types</h4>
+                    <div class="legend-item"><span class="legend-color" style="background: #2ecc71;"></span> Rice</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #f39c12;"></span> Wheat</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #e74c3c;"></span> Corn</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #9b59b6;"></span> Cotton</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #3498db;"></span> Vegetables</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #1abc9c;"></span> Orchards</div>
+                </div>
+            </div>
+        </div>
+        <!-- End Tab 2 -->
+
+        <!-- Tab 3: Canals Analysis -->
+        <div class="tab-content" id="canals-analysis">
+            <div class="control-panel">
+                <div class="card">
+                    <h3><i class="fas fa-map-marker-alt"></i> Canal Location</h3>
+                    <p class="hint">Click the button to zoom to canal area</p>
+                    
+                    <button class="field-btn" onclick="zoomToCanal()" style="width: 100%;">
+                        <span class="field-color" style="background: #3498db;"></span>
+                        Zoom to Canal Area
+                    </button>
+                    
+                    <div class="info-box" style="margin-top: 15px;">
+                        <p style="font-size: 12px; color: #7f8c8d;">
+                            <i class="fas fa-info-circle"></i> 
+                            Raw TIFF image will be displayed on the map when uploaded
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3><i class="fas fa-water"></i> Canals Analysis</h3>
+                    <p class="hint">Detect aquatic vegetation and water quality in canals</p>
+                    
+                    <div class="upload-area" id="canalUploadArea">
+                        <i class="fas fa-file-image"></i>
+                        <p>Upload Raw TIFF Image</p>
+                        <input type="file" id="canalFileInput" accept=".tiff,.tif" hidden>
+                    </div>
+                    
+                    <div class="info-box">
+                        <p><strong>Detection Capabilities:</strong></p>
+                        <ul>
+                            <li>Floating Vegetation (Water Hyacinth)</li>
+                            <li>Algae Blooms Detection</li>
+                            <li>Water Quality Assessment</li>
+                            <li>Chlorophyll-a Concentration</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="analysis-options">
+                        <label>
+                            <input type="checkbox" checked> Detect Floating Vegetation
+                        </label>
+                        <label>
+                            <input type="checkbox" checked> Algae Bloom Detection
+                        </label>
+                        <label>
+                            <input type="checkbox"> Water Quality Index
+                        </label>
+                    </div>
+                    
+                    <button id="analyzeCanalBtn" class="btn btn-primary" disabled>
+                        <i class="fas fa-microscope"></i>
+                        Analyze Canal
+                    </button>
+                    
+                    <div id="canalStatus" class="status-message hidden"></div>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fas fa-chart-area"></i> Analysis Results</h3>
+                    <div id="canalResults" class="results-box">
+                        <p>No analysis results yet</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="map-panel">
+                <div id="canalMap" class="analysis-map"></div>
+                <div class="map-legend" id="canalLegend">
+                    <h4>Vegetation Density</h4>
+                    <div class="legend-item"><span class="legend-color" style="background: #d73027;"></span> Very High</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #fc8d59;"></span> High</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #fee090;"></span> Medium</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #e0f3f8;"></span> Low</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #91bfdb;"></span> Clear Water</div>
+                </div>
+            </div>
+        </div>
+        <!-- End Tab 3 -->
+
+        <!-- Tab 4: Lakes Analysis -->
+        <div class="tab-content" id="lakes-analysis">
+            <div class="control-panel">
+                <div class="card">
+                    <h3><i class="fas fa-map-marker-alt"></i> Lake Location</h3>
+                    <p class="hint">Click the button to zoom to lake area</p>
+                    
+                    <button class="field-btn" onclick="zoomToLake()" style="width: 100%;">
+                        <span class="field-color" style="background: #1abc9c;"></span>
+                        Zoom to Lake Area
+                    </button>
+                    
+                    <div class="info-box" style="margin-top: 15px;">
+                        <p style="font-size: 12px; color: #7f8c8d;">
+                            <i class="fas fa-info-circle"></i> 
+                            Raw TIFF image will be displayed on the map when uploaded
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3><i class="fas fa-tint"></i> Lakes Analysis</h3>
+                    <p class="hint">Monitor algae blooms and aquatic vegetation in lakes</p>
+                    
+                    <div class="upload-area" id="lakeUploadArea">
+                        <i class="fas fa-file-image"></i>
+                        <p>Upload Raw TIFF Image</p>
+                        <input type="file" id="lakeFileInput" accept=".tiff,.tif" hidden>
+                    </div>
+                    
+                    <div class="info-box">
+                        <p><strong>Monitoring Features:</strong></p>
+                        <ul>
+                            <li>Harmful Algal Blooms (HABs)</li>
+                            <li>Cyanobacteria Detection</li>
+                            <li>Submerged Vegetation Mapping</li>
+                            <li>Chlorophyll Concentration</li>
+                            <li>Water Turbidity Analysis</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="analysis-options">
+                        <label>
+                            <input type="checkbox" checked> Algae Bloom Detection
+                        </label>
+                        <label>
+                            <input type="checkbox" checked> Chlorophyll Mapping
+                        </label>
+                        <label>
+                            <input type="checkbox"> Turbidity Analysis
+                        </label>
+                        <label>
+                            <input type="checkbox"> Vegetation Coverage
+                        </label>
+                    </div>
+                    
+                    <button id="analyzeLakeBtn" class="btn btn-primary" disabled>
+                        <i class="fas fa-chart-line"></i>
+                        Analyze Lake
+                    </button>
+                    
+                    <div id="lakeStatus" class="status-message hidden"></div>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fas fa-water"></i> Water Quality Metrics</h3>
+                    <div id="lakeResults" class="results-box">
+                        <p>No analysis results yet</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="map-panel">
+                <div id="lakeMap" class="analysis-map"></div>
+                <div class="map-legend" id="lakeLegend">
+                    <h4>Algae Concentration</h4>
+                    <div class="legend-item"><span class="legend-color" style="background: #8b0000;"></span> Severe Bloom</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #ff4500;"></span> High</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #ffa500;"></span> Moderate</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #ffff00;"></span> Low</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #90ee90;"></span> Minimal</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #4169e1;"></span> Clear Water</div>
+                </div>
+            </div>
+        </div>
+        <!-- End Tab 4 -->
+
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-spinner">
+            <i class="fas fa-satellite fa-spin"></i>
+            <p>جاري تحميل الصورة من Sentinel-2...</p>
+        </div>
+    </div>
+
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- GeoTIFF.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/geotiff@2.0.7/dist-browser/geotiff.js"></script>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+    
+    <!-- Main Script -->
+    <script src="app.js"></script>
+</body>
+</html>

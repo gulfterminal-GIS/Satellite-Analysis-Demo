@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIFF Verification Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .upload-area {
+            border: 3px dashed #34495e;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 30px;
+        }
+        .upload-area:hover {
+            background: #ecf0f1;
+        }
+        .results {
+            display: none;
+        }
+        .results.active {
+            display: block;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .info-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #2c3e50;
+        }
+        .info-card h3 {
+            color: #2c3e50;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .info-card .value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #34495e;
+        }
+        .sample-values {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .sample-values h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        .band-values {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .band-value {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .band-value .label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .band-value .value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 TIFF Verification Tool</h1>
+        <p style="color: #666; margin-bottom: 20px;">
+            Upload your downloaded TIFF file to verify it contains raw band reflectance values
+        </p>
+
+        <div class="upload-area" id="uploadArea">
+            <h2 style="color: #34495e; margin-bottom: 10px;">📁 Upload TIFF File</h2>
+            <p style="color: #666;">Click or drag your sentinel_raw_*.tiff file here</p>
+            <input type="file" id="fileInput" accept=".tiff,.tif" hidden>
+        </div>
+
+        <div class="results" id="results">
+            <div class="status success">
+                <strong>✅ TIFF File Verified Successfully!</strong>
+                <p>This file contains raw reflectance values suitable for manual index calculations.</p>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>File Size</h3>
+                    <div class="value" id="fileSize">-</div>
+                </div>
+                <div class="info-card">
+                    <h3>Image Dimensions</h3>
+                    <div class="value" id="dimensions">-</div>
+                </div>
+                <div class="info-card">
+                    <h3>Number of Bands</h3>
+                    <div class="value" id="bandCount">-</div>
+                </div>
+                <div class="info-card">
+                    <h3>Data Type</h3>
+                    <div class="value" id="dataType">-</div>
+                </div>
+            </div>
+
+            <div class="sample-values">
+                <h3>Sample Pixel Values (Center of Image)</h3>
+                <div class="band-values">
+                    <div class="band-value">
+                        <div class="label">B02 (Blue)</div>
+                        <div class="value" id="b02Value">-</div>
+                    </div>
+                    <div class="band-value">
+                        <div class="label">B03 (Green)</div>
+                        <div class="value" id="b03Value">-</div>
+                    </div>
+                    <div class="band-value">
+                        <div class="label">B04 (Red)</div>
+                        <div class="value" id="b04Value">-</div>
+                    </div>
+                    <div class="band-value">
+                        <div class="label">B08 (NIR)</div>
+                        <div class="value" id="b08Value">-</div>
+                    </div>
+                </div>
+                <p style="color: #666; font-size: 13px;">
+                    ✓ Values should be between 0.0 and 1.0 (reflectance)<br>
+                    ✓ Typical vegetation: B08 > B04 (NIR higher than Red)
+                </p>
+            </div>
+
+            <div class="sample-values">
+                <h3>Calculated Indices (from sample pixel)</h3>
+                <div class="band-values">
+                    <div class="band-value">
+                        <div class="label">NDVI</div>
+                        <div class="value" id="ndviValue">-</div>
+                    </div>
+                    <div class="band-value">
+                        <div class="label">EVI</div>
+                        <div class="value" id="eviValue">-</div>
+                    </div>
+                    <div class="band-value">
+                        <div class="label">GNDVI</div>
+                        <div class="value" id="gndviValue">-</div>
+                    </div>
+                    <div class="band-value">
+                        <div class="label">SAVI</div>
+                        <div class="value" id="saviValue">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sample-values">
+                <h3>Statistics (All Pixels)</h3>
+                <div id="statistics"></div>
+            </div>
+
+            <div class="sample-values">
+                <h3>Raw Data Sample (First 10 pixels of each band)</h3>
+                <pre id="rawData"></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- GeoTIFF.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/geotiff@2.0.7/dist-browser/geotiff.js"></script>
+    
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const results = document.getElementById('results');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.background = '#ecf0f1';
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.background = '';
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.background = '';
+            const file = e.dataTransfer.files[0];
+            if (file) processTiff(file);
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) processTiff(file);
+        });
+
+        async function processTiff(file) {
+            try {
+                console.log('📂 Reading TIFF file...');
+                
+                // Read file as array buffer
+                const arrayBuffer = await file.arrayBuffer();
+                
+                // Parse TIFF
+                const tiff = await GeoTIFF.fromArrayBuffer(arrayBuffer);
+                const image = await tiff.getImage();
+                
+                // Get metadata
+                const width = image.getWidth();
+                const height = image.getHeight();
+                const samplesPerPixel = image.getSamplesPerPixel();
+                const sampleFormat = image.getSampleFormat();
+                
+                console.log('✅ TIFF parsed successfully');
+                console.log('Dimensions:', width, 'x', height);
+                console.log('Bands:', samplesPerPixel);
+                console.log('Sample Format:', sampleFormat);
+                
+                // Read raster data
+                const rasters = await image.readRasters();
+                
+                // Update UI
+                document.getElementById('fileSize').textContent = (file.size / 1024).toFixed(2) + ' KB';
+                document.getElementById('dimensions').textContent = `${width} x ${height}`;
+                document.getElementById('bandCount').textContent = samplesPerPixel;
+                document.getElementById('dataType').textContent = sampleFormat[0] === 3 ? 'FLOAT32' : 'UINT16';
+                
+                // Get center pixel values
+                const centerX = Math.floor(width / 2);
+                const centerY = Math.floor(height / 2);
+                const centerIndex = centerY * width + centerX;
+                
+                const b02 = rasters[0][centerIndex];
+                const b03 = rasters[1][centerIndex];
+                const b04 = rasters[2][centerIndex];
+                const b08 = rasters[3][centerIndex];
+                
+                console.log('Center pixel values:', { b02, b03, b04, b08 });
+                console.log('Sample format:', sampleFormat);
+                console.log('First 20 values of B02:', Array.from(rasters[0].slice(0, 20)));
+                
+                // If UINT16, convert to reflectance (divide by 10000)
+                let b02_ref = b02;
+                let b03_ref = b03;
+                let b04_ref = b04;
+                let b08_ref = b08;
+                
+                if (sampleFormat[0] === 2) { // UINT16
+                    console.log('⚠️ Data is UINT16, converting to reflectance...');
+                    b02_ref = b02 / 10000;
+                    b03_ref = b03 / 10000;
+                    b04_ref = b04 / 10000;
+                    b08_ref = b08 / 10000;
+                }
+                
+                document.getElementById('b02Value').textContent = b02_ref.toFixed(4);
+                document.getElementById('b03Value').textContent = b03_ref.toFixed(4);
+                document.getElementById('b04Value').textContent = b04_ref.toFixed(4);
+                document.getElementById('b08Value').textContent = b08_ref.toFixed(4);
+                
+                // Calculate indices
+                const ndvi = (b08_ref - b04_ref) / (b08_ref + b04_ref);
+                const evi = 2.5 * ((b08_ref - b04_ref) / (b08_ref + 6*b04_ref - 7.5*b02_ref + 1));
+                const gndvi = (b08_ref - b03_ref) / (b08_ref + b03_ref);
+                const savi = ((b08_ref - b04_ref) / (b08_ref + b04_ref + 0.428)) * (1 + 0.428);
+                
+                document.getElementById('ndviValue').textContent = ndvi.toFixed(4);
+                document.getElementById('eviValue').textContent = evi.toFixed(4);
+                document.getElementById('gndviValue').textContent = gndvi.toFixed(4);
+                document.getElementById('saviValue').textContent = savi.toFixed(4);
+                
+                // Calculate statistics
+                const stats = calculateStatistics(rasters);
+                displayStatistics(stats);
+                
+                // Show raw data sample
+                displayRawData(rasters, width);
+                
+                // Show results
+                results.classList.add('active');
+                
+            } catch (error) {
+                console.error('Error processing TIFF:', error);
+                alert('Error reading TIFF file: ' + error.message);
+            }
+        }
+
+        function calculateStatistics(rasters) {
+            const stats = [];
+            const bandNames = ['B02 (Blue)', 'B03 (Green)', 'B04 (Red)', 'B08 (NIR)'];
+            
+            for (let i = 0; i < rasters.length; i++) {
+                const data = rasters[i];
+                let min = Infinity;
+                let max = -Infinity;
+                let sum = 0;
+                let count = 0;
+                
+                for (let j = 0; j < data.length; j++) {
+                    const v = data[j];
+                    if (!isNaN(v) && v > 0) {
+                        if (v < min) min = v;
+                        if (v > max) max = v;
+                        sum += v;
+                        count++;
+                    }
+                }
+                
+                const mean = count > 0 ? sum / count : 0;
+                
+                stats.push({
+                    band: bandNames[i],
+                    min: min === Infinity ? 0 : min.toFixed(4),
+                    max: max === -Infinity ? 0 : max.toFixed(4),
+                    mean: mean.toFixed(4),
+                    pixels: count
+                });
+            }
+            
+            return stats;
+        }
+
+        function displayStatistics(stats) {
+            const html = stats.map(s => `
+                <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                    <strong>${s.band}</strong><br>
+                    Min: ${s.min} | Max: ${s.max} | Mean: ${s.mean} | Valid Pixels: ${s.pixels}
+                </div>
+            `).join('');
+            
+            document.getElementById('statistics').innerHTML = html;
+        }
+
+        function displayRawData(rasters, width) {
+            let output = '';
+            const bandNames = ['B02', 'B03', 'B04', 'B08'];
+            
+            for (let i = 0; i < rasters.length; i++) {
+                output += `${bandNames[i]}: [`;
+                for (let j = 0; j < Math.min(10, rasters[i].length); j++) {
+                    output += rasters[i][j].toFixed(4);
+                    if (j < 9 && j < rasters[i].length - 1) output += ', ';
+                }
+                output += '...]\n';
+            }
+            
+            document.getElementById('rawData').textContent = output;
+        }
+    </script>
+</body>
+</html>
